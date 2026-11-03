@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Ular Tangga KPK & FPB - Kelas 5 SD</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 50%, #fef3c7 100%);
+            touch-action: manipulation;
+        }
+
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka', cursive;
+        }
+
+        /* 3D Dice styling */
+        .dice-box {
+            perspective: 600px;
+        }
+
+        .dice-cube {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s ease-out;
+        }
+
+        .dice-face {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 3px solid #3b82f6;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Custom board styling */
+        .board-container {
+            position: relative;
+            aspect-ratio: 1 / 1;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+
+        .pawn {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.3));
+            z-index: 20;
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .active-pawn {
+            animation: bounce-gentle 1s infinite;
+        }
+
+        /* Glassmorphism elements */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-12 flex flex-col justify-between">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-sky-100 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-amber-400 to-orange-500 text-white p-2.5 rounded-2xl shadow-md">
+                    <i class="fa-solid me-0 fa-dice-d6 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold text-sky-900 leading-tight">Ular Tangga KPK & FPB</h1>
+                    <p class="text-xs text-sky-600 font-semibold">Petualangan Matematika Seru • Kelas 5 SD</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btn-sound" onclick="toggleSound()" class="p-2.5 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-xl transition font-medium flex items-center gap-1.5 text-sm" title="Matikan/Hidupkan Suara">
+                    <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+                </button>
+                <button onclick="openGuideModal()" class="px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-xl transition font-medium text-xs md:text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span class="hidden sm:inline">Rangkuman Materi</span>
+                </button>
+                <button onclick="resetGamePrompt()" class="p-2.5 bg-rose-100 hover:bg-rose-200 text-rose-700 rounded-xl transition font-medium text-sm" title="Mulai Ulang Game">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-4 w-full flex-grow flex flex-col justify-center">
+
+        <!-- SETUP SCREEN MODAL/VIEW -->
+        <div id="setup-screen" class="max-w-2xl mx-auto w-full bg-white rounded-3xl p-6 md:p-8 shadow-xl border-4 border-sky-200 text-center my-auto">
+            <div class="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold text-sky-900 mb-2">Pengaturan Permainan</h2>
+            <p class="text-slate-600 text-sm mb-6">Pilih jumlah pemain (2-10 orang) dan tentukan siapa saja yang bermain!</p>
+
+            <div class="space-y-5 mb-8 text-left">
+                <!-- Player Count Selection -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Jumlah Pemain</label>
+                    <div class="grid grid-cols-5 gap-2" id="player-count-buttons">
+                        <button type="button" onclick="setPlayerCount(2)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-sky-500 bg-sky-50 text-sky-900 shadow-sm" data-count="2">2</button>
+                        <button type="button" onclick="setPlayerCount(3)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="3">3</button>
+                        <button type="button" onclick="setPlayerCount(4)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="4">4</button>
+                        <button type="button" onclick="setPlayerCount(5)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="5">5</button>
+                        <button type="button" onclick="setPlayerCount(6)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="6">6</button>
+                        <button type="button" onclick="setPlayerCount(7)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="7">7</button>
+                        <button type="button" onclick="setPlayerCount(8)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="8">8</button>
+                        <button type="button" onclick="setPlayerCount(9)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="9">9</button>
+                        <button type="button" onclick="setPlayerCount(10)" class="btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300" data-count="10">10</button>
+                    </div>
+                </div>
+
+                <!-- Individual Players Customization List -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Daftar Pemain & Tipe</label>
+                    <div id="player-setup-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                        <!-- Dynamic Player Slots inserted by JS -->
+                    </div>
+                </div>
+
+                <!-- Difficulty Level Selection -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tingkat Kesulitan Soal</label>
+                    <select id="difficulty-select" class="w-full p-3 rounded-xl border-2 border-slate-200 font-semibold text-slate-700 focus:border-sky-500 focus:outline-none bg-white">
+                        <option value="easy">Mudah (Angka kecil 1-20 & Dasar)</option>
+                        <option value="medium" selected>Sedang (Campuran FPB/KPK & Soal Cerita)</option>
+                        <option value="hard">Tantangan (Angka lebih besar & Soal Cerita Kompleks)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl font-bold text-lg shadow-lg shadow-teal-500/30 transform hover:-translate-y-0.5 transition active:translate-y-0">
+                <i class="fa-solid fa-play mr-2"></i> Mulai Petualangan!
+            </button>
+        </div>
+
+        <!-- GAMEPLAY CONTAINER (Hidden initially) -->
+        <div id="gameplay-screen" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Side: Control Panel & Status -->
+            <div class="lg:col-span-4 space-y-4 order-2 lg:order-1">
+                
+                <!-- Dynamic Player Status Cards Container -->
+                <div class="bg-white rounded-2xl p-4 shadow-md border border-slate-100 space-y-3">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                        <span>Pemain & Giliran</span>
+                        <span id="game-round-badge" class="bg-sky-100 text-sky-800 text-xs px-2.5 py-0.5 rounded-full font-bold">Giliran: Pemain 1</span>
+                    </h3>
+
+                    <div id="players-status-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Player Status Cards generated dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Dice & Action Controls -->
+                <div class="bg-white rounded-2xl p-5 shadow-md border border-slate-100 text-center space-y-4">
+                    <div class="flex items-center justify-center gap-6">
+                        <!-- Visual Dice Container -->
+                        <div class="dice-box py-2">
+                            <div id="dice-element" class="dice-cube">
+                                <div class="dice-face" style="transform: translateZ(30px)"><i class="fa-solid fa-dice-one"></i></div>
+                            </div>
+                        </div>
+
+                        <div class="text-left">
+                            <div class="text-xs text-slate-500 font-semibold uppercase">Hasil Dadul</div>
+                            <div id="dice-result-text" class="text-3xl font-bold text-sky-900">-</div>
+                        </div>
+                    </div>
+
+                    <button id="btn-roll-dice" onclick="rollDice()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-md shadow-sky-500/20 text-base transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-dice text-xl"></i>
+                        <span>Kocok Dadu</span>
+                    </button>
+
+                    <p id="action-prompt" class="text-xs text-slate-500 italic">Klik tombol Kocok Dadu untuk melangkah!</p>
+                </div>
+
+                <!-- Quick Scratchpad Toggle & Helper Tools -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openScratchpad()" class="p-3 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-800 rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition shadow-sm">
+                        <i class="fa-solid fa-pen-to-square text-teal-600"></i>
+                        <span>Cakar-Cakar</span>
+                    </button>
+                    <button onclick="openGuideModal()" class="p-3 bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition shadow-sm">
+                        <i class="fa-solid fa-lightbulb text-purple-600"></i>
+                        <span>Rumus KPK/FPB</span>
+                    </button>
+                </div>
+
+                <!-- Game Info / Board Legend -->
+                <div class="bg-sky-50/70 rounded-2xl p-4 border border-sky-100 text-xs text-sky-900 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-sky-950">
+                        <i class="fa-solid fa-circle-info"></i> Petunjuk Permainan:
+                    </div>
+                    <ul class="space-y-1 list-disc list-inside text-slate-700">
+                        <li><strong class="text-emerald-700"><i class="fa-solid fa-stairs"></i> Tangga:</strong> Jawab soal FPB/KPK dengan benar untuk memanjat naik!</li>
+                        <li><strong class="text-rose-700"><i class="fa-solid fa-worm"></i> Ular:</strong> Jawab soal dengan benar untuk terhindar dari gigitan ular!</li>
+                        <li>Pemain yang pertama kali sampai di <strong>Petak 100</strong> menang!</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Right Side: Snakes & Ladders Board Canvas / HTML Grid -->
+            <div class="lg:col-span-8 order-1 lg:order-2 flex flex-col items-center">
+                <div class="board-container w-full bg-white rounded-3xl p-3 shadow-xl border-4 border-amber-200 relative overflow-hidden">
+                    <!-- SVG Overlay for Snakes and Ladders artwork -->
+                    <svg id="board-svg" class="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 1000 1000">
+                        <!-- Snakes and Ladders lines will be dynamically rendered here -->
+                    </svg>
+
+                    <!-- 10x10 Board Grid -->
+                    <div id="board-grid" class="grid grid-cols-10 grid-rows-10 w-full h-full gap-0.5 rounded-2xl overflow-hidden bg-amber-100">
+                        <!-- Squares generated dynamically by JS -->
+                    </div>
+
+                    <!-- Pawns layer container (Dynamic up to 10 pawns) -->
+                    <div id="pawns-container"></div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MATH QUESTION MODAL -->
+    <div id="question-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-sky-300 relative transform transition-all scale-100 animate-fadeIn">
+            
+            <!-- Modal Header Badge -->
+            <div id="question-badge-container" class="flex items-center justify-between mb-4">
+                <span id="question-type-badge" class="px-3.5 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-solid fa-brain"></i> Tantangan Matematika
+                </span>
+                <span id="question-timer" class="text-xs font-bold text-slate-400">
+                    <i class="fa-regular fa-clock mr-1"></i> Santai
+                </span>
+            </div>
+
+            <!-- Question Title / Context -->
+            <div id="question-context" class="text-xs font-bold text-sky-700 uppercase tracking-wide mb-1">
+                Tantangan Memanjat Tangga!
+            </div>
+            
+            <!-- Question Body Text -->
+            <div id="question-text" class="text-lg md:text-xl font-bold text-slate-800 mb-6 leading-snug">
+                Berapakah FPB dari 12 dan 18?
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                <!-- Option buttons generated dynamically -->
+            </div>
+
+            <!-- Action buttons inside modal -->
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                <button onclick="openScratchpad()" class="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1.5 p-2 rounded-lg hover:bg-teal-50 transition">
+                    <i class="fa-solid fa-pen-to-square"></i> Buka Papan Cakar-Cakar
+                </button>
+                <div id="feedback-message" class="text-xs font-bold hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EXPLANATION / PEMBAHASAN MODAL -->
+    <div id="explanation-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-4 border-emerald-300 relative animate-fadeIn">
+            <div class="flex items-center gap-3 mb-3">
+                <div id="exp-status-icon" class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <h3 id="exp-status-title" class="text-lg font-bold text-slate-800">Jawaban Tepat!</h3>
+                    <p id="exp-status-sub" class="text-xs text-slate-500">Berikut adalah penjelasan langkahnya:</p>
+                </div>
+            </div>
+
+            <div id="explanation-body" class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs md:text-sm text-slate-700 space-y-2 mb-6 max-h-60 overflow-y-auto">
+                <!-- Solution details -->
+            </div>
+
+            <button onclick="closeExplanationModal()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition shadow-md">
+                Lanjutkan Permainan <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRATCHPAD / CAKAR-CAKAR CANVAS MODAL -->
+    <div id="scratchpad-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-5 shadow-2xl border-4 border-teal-300 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-teal-100 text-teal-700 rounded-xl">
+                        <i class="fa-solid fa-pen-nib"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-800">Papan Cakar-Cakar / Oret-oretan</h3>
+                        <p class="text-xs text-slate-500">Hitung perkalian & pohon faktor disini!</p>
+                    </div>
+                </div>
+                <button onclick="closeScratchpad()" class="p-2 text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative bg-amber-50/50 rounded-2xl border-2 border-dashed border-teal-200 h-64 md:h-80 w-full overflow-hidden">
+                <canvas id="scratch-canvas" class="w-full h-full cursor-crosshair"></canvas>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="setScratchColor('#1e293b')" class="w-7 h-7 rounded-full bg-slate-800 border-2 border-white shadow"></button>
+                    <button onclick="setScratchColor('#2563eb')" class="w-7 h-7 rounded-full bg-blue-600 border-2 border-white shadow"></button>
+                    <button onclick="setScratchColor('#dc2626')" class="w-7 h-7 rounded-full bg-red-600 border-2 border-white shadow"></button>
+                    <button onclick="setScratchColor('#16a34a')" class="w-7 h-7 rounded-full bg-green-600 border-2 border-white shadow"></button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="clearScratchpad()" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold rounded-xl text-xs transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Hapus Semua
+                    </button>
+                    <button onclick="closeScratchpad()" class="px-4 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl text-xs transition">
+                        Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GUIDE & SUMMARY MODAL -->
+    <div id="guide-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border-4 border-amber-300 relative max-h-[85vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-2xl text-amber-500"></i>
+                    <h3 class="text-lg font-bold text-slate-800">Rangkuman KPK & FPB Kelas 5</h3>
+                </div>
+                <button onclick="closeGuideModal()" class="text-slate-400 hover:text-slate-600 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto my-4 space-y-4 text-xs md:text-sm text-slate-700 pr-2">
+                <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                    <h4 class="font-bold text-amber-900 text-base mb-1"><i class="fa-solid fa-arrow-up-wide-short"></i> KPK (Kelipatan Persekutuan Terkecil)</h4>
+                    <p class="mb-2">Kelipatan terkecil yang sama dari dua bilangan atau lebih.</p>
+                    <p class="font-semibold text-amber-800">Cara Mencari dengan Faktorisasi Prima:</p>
+                    <p class="italic bg-white p-2 rounded-lg border border-amber-200 mt-1">"Ambil <strong>semua faktor prima</strong>. Jika ada yang sama, ambil pangkat yang <strong>terbesar</strong>!"</p>
+                    <p class="mt-2 text-xs text-amber-700"><strong>Kata Kunci Soal Cerita:</strong> Setiap ... sekali, bersamaan, bertemu lagi, bersama-sama lagi.</p>
+                </div>
+
+                <div class="bg-sky-50 p-4 rounded-2xl border border-sky-200">
+                    <h4 class="font-bold text-sky-900 text-base mb-1"><i class="fa-solid fa-boxes-packing"></i> FPB (Faktor Persekutuan Terbesar)</h4>
+                    <p class="mb-2">Faktor terbesar yang sama dari dua bilangan atau lebih.</p>
+                    <p class="font-semibold text-sky-800">Cara Mencari dengan Faktorisasi Prima:</p>
+                    <p class="italic bg-white p-2 rounded-lg border border-sky-200 mt-1">"Ambil <strong>faktor prima yang SAMA saja</strong> dengan pangkat yang <strong>terkecil</strong>!"</p>
+                    <p class="mt-2 text-xs text-sky-700"><strong>Kata Kunci Soal Cerita:</strong> Paling banyak, dibagi sama rata, kantong terbanyak, jumlah sama.</p>
+                </div>
+            </div>
+
+            <button onclick="closeGuideModal()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition">
+                Mengerti, Kembali Main!
+            </button>
+        </div>
+    </div>
+
+    <!-- WINNER CELEBRATION MODAL -->
+    <div id="win-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md flex items-center justify-center z-50 p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center shadow-2xl border-4 border-amber-400 animate-bounce-gentle">
+            <div class="w-20 h-20 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-3 shadow-inner">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Selamat! Horeee!</h2>
+            <p id="winner-name-text" class="text-lg font-bold text-amber-600 mb-4">Pemain 1 Memenangkan Petualangan!</p>
+            
+            <p class="text-xs text-slate-500 mb-6">Kamu telah berhasil menyelesaikan papan Ular Tangga KPK & FPB dengan sangat baik!</p>
+
+            <button onclick="startGame()" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold rounded-xl shadow-lg transition hover:scale-105">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Main Lagi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game Engine Configuration & State
+        const BOARD_SIZE = 100;
+        let selectedPlayerCount = 2;
+        let difficulty = 'medium';
+        let isSoundOn = true;
+
+        // Color & Preset options for up to 10 players
+        const PLAYER_PRESETS = [
+            { id: 1, name: 'Pemain 1', color: '#f59e0b', bgClass: 'bg-amber-500', textClass: 'text-amber-700', borderClass: 'border-amber-400', icon: 'fa-user-ninja' },
+            { id: 2, name: 'Pemain 2', color: '#4f46e5', bgClass: 'bg-indigo-600', textClass: 'text-indigo-700', borderClass: 'border-indigo-400', icon: 'fa-user-astronaut' },
+            { id: 3, name: 'Pemain 3', color: '#10b981', bgClass: 'bg-emerald-500', textClass: 'text-emerald-700', borderClass: 'border-emerald-400', icon: 'fa-user-graduate' },
+            { id: 4, name: 'Pemain 4', color: '#f43f5e', bgClass: 'bg-rose-500', textClass: 'text-rose-700', borderClass: 'border-rose-400', icon: 'fa-wand-magic-sparkles' },
+            { id: 5, name: 'Pemain 5', color: '#8b5cf6', bgClass: 'bg-purple-600', textClass: 'text-purple-700', borderClass: 'border-purple-400', icon: 'fa-mask' },
+            { id: 6, name: 'Pemain 6', color: '#06b6d4', bgClass: 'bg-cyan-500', textClass: 'text-cyan-700', borderClass: 'border-cyan-400', icon: 'fa-robot' },
+            { id: 7, name: 'Pemain 7', color: '#ea580c', bgClass: 'bg-orange-600', textClass: 'text-orange-700', borderClass: 'border-orange-400', icon: 'fa-dragon' },
+            { id: 8, name: 'Pemain 8', color: '#65a30d', bgClass: 'bg-lime-600', textClass: 'text-lime-700', borderClass: 'border-lime-400', icon: 'fa-frog' },
+            { id: 9, name: 'Pemain 9', color: '#ec4899', bgClass: 'bg-pink-500', textClass: 'text-pink-700', borderClass: 'border-pink-400', icon: 'fa-cat' },
+            { id: 10, name: 'Pemain 10', color: '#64748b', bgClass: 'bg-slate-500', textClass: 'text-slate-700', borderClass: 'border-slate-400', icon: 'fa-ghost' }
+        ];
+
+        let playerTypes = ['human', 'ai', 'human', 'ai', 'human', 'ai', 'human', 'ai', 'human', 'ai']; // default player types
+        let players = [];
+
+        let currentTurn = 0; // Index 0..players.length - 1
+        let isMoving = false;
+        let activeQuestion = null;
+        let pendingMoveTarget = null;
+        let isLadderOrSnakePending = false;
+        let pendingSpecialType = null; // 'ladder' or 'snake'
+
+        // Snakes and Ladders Board Mappings
+        const LADDERS = {
+            4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91
+        };
+
+        const SNAKES = {
+            17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 99: 78
+        };
+
+        function setPlayerCount(count) {
+            selectedPlayerCount = count;
+            
+            // Highlight count button
+            document.querySelectorAll('#player-count-buttons .btn-count').forEach(btn => {
+                const btnCount = parseInt(btn.getAttribute('data-count'));
+                if (btnCount === count) {
+                    btn.className = "btn-count p-3 rounded-xl border-2 font-bold text-center border-sky-500 bg-sky-50 text-sky-900 shadow-sm";
+                } else {
+                    btn.className = "btn-count p-3 rounded-xl border-2 font-bold text-center border-slate-200 hover:border-sky-300 text-slate-700";
+                }
+            });
+
+            renderPlayerSetupList();
+        }
+
+        function renderPlayerSetupList() {
+            const container = document.getElementById('player-setup-list');
+            container.innerHTML = '';
+
+            for (let i = 0; i < selectedPlayerCount; i++) {
+                const preset = PLAYER_PRESETS[i];
+                const isAI = playerTypes[i] === 'ai';
+
+                const card = document.createElement('div');
+                card.className = "p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs";
+                card.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-full ${preset.bgClass} text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                            <i class="fa-solid ${preset.icon}"></i>
+                        </div>
+                        <span class="font-bold text-slate-700">${preset.name}</span>
+                    </div>
+                    <select onchange="updatePlayerType(${i}, this.value)" class="p-1.5 rounded-lg border border-slate-300 bg-white font-semibold text-slate-700 focus:outline-none">
+                        <option value="human" ${!isAI ? 'selected' : ''}>Manusia 👤</option>
+                        <option value="ai" ${isAI ? 'selected' : ''}>Robot AI 🤖</option>
+                    </select>
+                `;
+                container.appendChild(card);
+            }
+        }
+
+        function updatePlayerType(index, type) {
+            playerTypes[index] = type;
+        }
+
+        function updatePawnPositions() {
+            // Group players by square position
+            const positionGroups = {};
+            players.forEach((p) => {
+                if (!positionGroups[p.pos]) positionGroups[p.pos] = [];
+                positionGroups[p.pos].push(p);
+            });
+
+            // Update positions for all pawns
+            players.forEach((player) => {
+                const pawnEl = document.getElementById(player.elementId);
+                if (!pawnEl) return;
+
+                const coords = getSquareCoords(player.pos);
+                const playersOnSquare = positionGroups[player.pos];
+                const count = playersOnSquare.length;
+                const index = playersOnSquare.indexOf(player);
+
+                let offsetX = 0;
+                let offsetY = 0;
+
+                if (count > 1) {
+                    let radius = 10; // offset radius in pixels
+                    if (count > 3) radius = 12;
+                    if (count > 6) radius = 16; // Expand radius if many pawns are on the same square
+                    const angle = (2 * Math.PI / count) * index;
+                    offsetX = Math.cos(angle) * radius;
+                    offsetY = Math.sin(angle) * radius;
+                }
+
+                pawnEl.style.left = `calc(${coords.x}% - 14px + ${offsetX}px)`;
+                pawnEl.style.top = `calc(${coords.y}% - 14px + ${offsetY}px)`;
+            });
+
+            // Update UI status text
+            players.forEach(p => {
+                const posEl = document.getElementById(`p-pos-${p.id}`);
+                if (posEl) posEl.innerText = `Petak ${p.pos}`;
+            });
+        }
+
+        function startGame() {
+            difficulty = document.getElementById('difficulty-select').value;
+            
+            // Build players array based on selection
+            players = [];
+            const pawnsContainer = document.getElementById('pawns-container');
+            pawnsContainer.innerHTML = '';
+
+            for (let i = 0; i < selectedPlayerCount; i++) {
+                const preset = PLAYER_PRESETS[i];
+                const isAI = playerTypes[i] === 'ai';
+                const name = isAI ? `${preset.name} (AI)` : preset.name;
+
+                players.push({
+                    id: preset.id,
+                    name: name,
+                    pos: 1,
+                    isAI: isAI,
+                    color: preset.color,
+                    preset: preset,
+                    elementId: `pawn-${preset.id}`
+                });
+
+                // Create pawn element dynamically
+                const pawn = document.createElement('div');
+                pawn.id = `pawn-${preset.id}`;
+                pawn.className = `pawn absolute w-6 h-6 sm:w-8 sm:h-8 rounded-full ${preset.bgClass} border-2 border-white text-white flex items-center justify-center text-[10px] sm:text-xs font-bold shadow-lg transition-all duration-300`;
+                pawn.innerHTML = `<i class="fa-solid ${preset.icon}"></i>`;
+                pawnsContainer.appendChild(pawn);
+            }
+
+            currentTurn = 0;
+            isMoving = false;
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('gameplay-screen').classList.remove('hidden');
+            document.getElementById('win-modal').classList.add('hidden');
+
+            renderPlayerStatusCards();
+            createBoardGrid();
+            drawSnakesAndLaddersSVG();
+            updatePawnPositions();
+            updateTurnDisplay();
+        }
+
+        function renderPlayerStatusCards() {
+            const container = document.getElementById('players-status-grid');
+            container.innerHTML = '';
+
+            players.forEach((p, idx) => {
+                const card = document.createElement('div');
+                card.id = `p-card-${p.id}`;
+                card.className = `p-2.5 rounded-xl border-2 ${p.preset.borderClass} flex flex-col items-center text-center transition`;
+                card.innerHTML = `
+                    <div class="w-8 h-8 rounded-full ${p.preset.bgClass} text-white flex items-center justify-center font-bold text-sm shadow-sm mb-1">
+                        <i class="fa-solid ${p.preset.icon}"></i>
+                    </div>
+                    <span class="font-bold text-xs text-slate-800 truncate w-full">${p.name}</span>
+                    <span id="p-pos-${p.id}" class="text-[10px] font-semibold ${p.preset.textClass}">Petak ${p.pos}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateTurnDisplay() {
+            const activePlayer = players[currentTurn];
+            const badge = document.getElementById('game-round-badge');
+            const btnRoll = document.getElementById('btn-roll-dice');
+
+            // Update active status for all player cards & pawns
+            players.forEach((p, idx) => {
+                const card = document.getElementById(`p-card-${p.id}`);
+                const pawn = document.getElementById(p.elementId);
+
+                if (idx === currentTurn) {
+                    card.classList.add('shadow-md', 'scale-105', 'bg-white');
+                    card.style.opacity = '1';
+                    if (pawn) pawn.classList.add('active-pawn');
+                } else {
+                    card.classList.remove('shadow-md', 'scale-105', 'bg-white');
+                    card.style.opacity = '0.6';
+                    if (pawn) pawn.classList.remove('active-pawn');
+                }
+            });
+
+            badge.innerText = `Giliran: ${activePlayer.name}`;
+            badge.className = `text-xs px-2.5 py-0.5 rounded-full font-bold text-white ${activePlayer.preset.bgClass}`;
+
+            if (activePlayer.isAI) {
+                btnRoll.disabled = true;
+                btnRoll.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('action-prompt').innerText = `${activePlayer.name} sedang berpikir...`;
+                setTimeout(rollDice, 1200);
+            } else {
+                btnRoll.disabled = false;
+                btnRoll.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('action-prompt').innerText = `Giliran ${activePlayer.name}. Klik Kocok Dadu!`;
+            }
+        }
+
+        function finishTurn() {
+            isMoving = false;
+            currentTurn = (currentTurn + 1) % players.length;
+            updateTurnDisplay();
+        }
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        
+        function playTone(freq, type, duration) {
+            if (!isSoundOn) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSound(effect) {
+            if (!isSoundOn) return;
+            switch(effect) {
+                case 'roll': playTone(400, 'sine', 0.1); setTimeout(()=>playTone(600, 'sine', 0.2), 100); break;
+                case 'move': playTone(300, 'triangle', 0.1); break;
+                case 'ladder': playTone(500, 'square', 0.1); setTimeout(()=>playTone(700, 'square', 0.3), 100); break;
+                case 'snake': playTone(200, 'sawtooth', 0.5); break;
+                case 'correct': playTone(600, 'sine', 0.1); setTimeout(()=>playTone(800, 'sine', 0.3), 150); break;
+                case 'wrong': playTone(150, 'sawtooth', 0.4); break;
+                case 'win': playTone(400, 'square', 0.2); setTimeout(()=>playTone(500, 'square', 0.2), 200); setTimeout(()=>playTone(600, 'square', 0.4), 400); break;
+            }
+        }
+
+        function toggleSound() {
+            isSoundOn = !isSoundOn;
+            const icon = document.getElementById('sound-icon');
+            if (isSoundOn) {
+                icon.className = "fa-solid fa-volume-high";
+                initAudio();
+            } else {
+                icon.className = "fa-solid fa-volume-xmark";
+            }
+        }
+
+        function createBoardGrid() {
+            const grid = document.getElementById('board-grid');
+            grid.innerHTML = '';
+            
+            for (let row = 9; row >= 0; row--) {
+                for (let col = 0; col < 10; col++) {
+                    const isEvenRow = row % 2 === 0;
+                    const actualCol = isEvenRow ? 9 - col : col;
+                    const num = (row * 10) + actualCol + 1;
+                    
+                    const cell = document.createElement('div');
+                    cell.className = "bg-white flex items-center justify-center relative font-bold text-slate-300 text-sm border border-slate-100/50";
+                    
+                    const numSpan = document.createElement('span');
+                    numSpan.innerText = num;
+                    numSpan.className = "absolute top-1 left-1.5 opacity-60 text-[10px] sm:text-xs";
+                    cell.appendChild(numSpan);
+                    
+                    // Add special icons
+                    if (LADDERS[num]) {
+                        cell.innerHTML += `<i class="fa-solid fa-stairs text-emerald-200/50 text-2xl absolute opacity-50 rotate-12"></i>`;
+                    }
+                    if (SNAKES[num]) {
+                        cell.innerHTML += `<i class="fa-solid fa-worm text-rose-200/50 text-2xl absolute opacity-50 -rotate-12"></i>`;
+                    }
+                    if (num === 100) {
+                        cell.innerHTML += `<i class="fa-solid fa-trophy text-amber-300 text-3xl absolute opacity-50"></i>`;
+                        cell.className += " bg-amber-50";
+                    }
+                    if (num === 1) {
+                        cell.className += " bg-sky-50";
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function getSquareCoords(pos) {
+            if (pos < 1) pos = 1;
+            if (pos > 100) pos = 100;
+            const zeroIdx = pos - 1;
+            const row = Math.floor(zeroIdx / 10);
+            const isEvenRow = row % 2 === 0;
+            const col = isEvenRow ? (zeroIdx % 10) : (9 - (zeroIdx % 10));
+            
+            // 10x10 grid -> each cell is 10%. Center is at 5%, 15%, etc.
+            const x = (col * 10) + 5;
+            const y = ((9 - row) * 10) + 5;
+            return { x, y };
+        }
+
+        function drawSnakesAndLaddersSVG() {
+            const svg = document.getElementById('board-svg');
+            svg.innerHTML = '';
+            
+            // Note: SVG viewBox is 0 0 1000 1000. Grid cells are 100x100.
+            const getSvgCoords = (pos) => {
+                const c = getSquareCoords(pos);
+                return { x: c.x * 10, y: c.y * 10 };
+            };
+
+            // Draw Ladders
+            for (let start in LADDERS) {
+                const end = LADDERS[start];
+                const p1 = getSvgCoords(start);
+                const p2 = getSvgCoords(end);
+                
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", p1.x);
+                line.setAttribute("y1", p1.y);
+                line.setAttribute("x2", p2.x);
+                line.setAttribute("y2", p2.y);
+                line.setAttribute("stroke", "#10b981"); // emerald-500
+                line.setAttribute("stroke-width", "12");
+                line.setAttribute("stroke-linecap", "round");
+                line.setAttribute("stroke-dasharray", "4 12");
+                line.style.filter = "drop-shadow(2px 4px 2px rgba(0,0,0,0.2))";
+                svg.appendChild(line);
+            }
+
+            // Draw Snakes
+            for (let head in SNAKES) {
+                const tail = SNAKES[head];
+                const p1 = getSvgCoords(head);
+                const p2 = getSvgCoords(tail);
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                
+                // create a wavy path
+                const midX = (p1.x + p2.x) / 2 + 30;
+                const midY = (p1.y + p2.y) / 2 - 30;
+                const d = `M ${p1.x} ${p1.y} Q ${midX} ${midY} ${p2.x} ${p2.y}`;
+                
+                path.setAttribute("d", d);
+                path.setAttribute("fill", "none");
+                path.setAttribute("stroke", "#f43f5e"); // rose-500
+                path.setAttribute("stroke-width", "8");
+                path.setAttribute("stroke-linecap", "round");
+                path.style.filter = "drop-shadow(2px 4px 2px rgba(0,0,0,0.2))";
+                svg.appendChild(path);
+
+                // Snake Head Circle
+                const headCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                headCircle.setAttribute("cx", p1.x);
+                headCircle.setAttribute("cy", p1.y);
+                headCircle.setAttribute("r", "12");
+                headCircle.setAttribute("fill", "#be123c"); // rose-700
+                svg.appendChild(headCircle);
+            }
+        }
+
+        function rollDice() {
+            if (isMoving) return;
+            isMoving = true;
+            playSound('roll');
+            
+            const btnRoll = document.getElementById('btn-roll-dice');
+            btnRoll.disabled = true;
+            btnRoll.classList.add('opacity-50');
+
+            const diceElement = document.getElementById('dice-element');
+            const resultText = document.getElementById('dice-result-text');
+            
+            // Visual Roll Animation
+            diceElement.style.transform = `rotateX(${Math.random() * 720 + 720}deg) rotateY(${Math.random() * 720 + 720}deg)`;
+            resultText.innerText = '...';
+
+            setTimeout(() => {
+                const result = Math.floor(Math.random() * 6) + 1;
+                
+                // Set final face
+                const faces = [
+                    '<i class="fa-solid fa-dice-one"></i>',
+                    '<i class="fa-solid fa-dice-two"></i>',
+                    '<i class="fa-solid fa-dice-three"></i>',
+                    '<i class="fa-solid fa-dice-four"></i>',
+                    '<i class="fa-solid fa-dice-five"></i>',
+                    '<i class="fa-solid fa-dice-six"></i>'
+                ];
+                diceElement.querySelector('.dice-face').innerHTML = faces[result - 1];
+                diceElement.style.transform = `rotateX(0deg) rotateY(0deg)`;
+                
+                resultText.innerText = result;
+                
+                const player = players[currentTurn];
+                document.getElementById('action-prompt').innerText = `${player.name} maju ${result} langkah!`;
+                
+                let dest = player.pos + result;
+                if (dest > 100) dest = 100 - (dest - 100); // Bounce back if > 100
+
+                setTimeout(() => {
+                    movePawnStepByStep(player, player.pos, dest, () => {
+                        handleLanded(player, dest);
+                    });
+                }, 1000);
+
+            }, 1000);
+        }
+
+        function movePawnStepByStep(player, start, end, callback) {
+            let current = start;
+            const step = current < end ? 1 : -1;
+            
+            function nextStep() {
+                if (current === end) {
+                    callback();
+                    return;
+                }
+                current += step;
+                player.pos = current;
+                playSound('move');
+                updatePawnPositions();
+                
+                setTimeout(nextStep, 300);
+            }
+            nextStep();
+        }
+
+        function handleLanded(player, pos) {
+            if (pos === 100) {
+                playSound('win');
+                showWinModal(player);
+                return;
+            }
+
+            if (LADDERS[pos]) {
+                pendingMoveTarget = LADDERS[pos];
+                pendingSpecialType = 'ladder';
+                document.getElementById('action-prompt').innerText = `${player.name} menemukan TANGGA! Jawab soal untuk memanjat.`;
+                triggerQuestion('ladder', pos, player);
+            } else if (SNAKES[pos]) {
+                pendingMoveTarget = SNAKES[pos];
+                pendingSpecialType = 'snake';
+                document.getElementById('action-prompt').innerText = `${player.name} bertemu ULAR! Jawab soal untuk menghindar.`;
+                triggerQuestion('snake', pos, player);
+            } else {
+                finishTurn();
+            }
+        }
+
+        function gcd(a, b) {
+            if (!b) return a;
+            return gcd(b, a % b);
+        }
+
+        function lcm(a, b) {
+            return (a * b) / gcd(a, b);
+        }
+
+        function getPrimeFactors(num) {
+            const factors = [];
+            let divisor = 2;
+            while (num >= 2) {
+                if (num % divisor == 0) {
+                    factors.push(divisor);
+                    num = num / divisor;
+                } else {
+                    divisor++;
+                }
+            }
+            return factors;
+        }
+
+        function formatFactors(factors) {
+            const counts = {};
+            factors.forEach(f => counts[f] = (counts[f] || 0) + 1);
+            let res = [];
+            for (let f in counts) {
+                res.push(counts[f] > 1 ? `${f}<sup>${counts[f]}</sup>` : `${f}`);
+            }
+            return res.join(' x ');
+        }
+
+        function generateQuestion() {
+            let maxNum = difficulty === 'easy' ? 20 : (difficulty === 'medium' ? 40 : 60);
+            let type = Math.random() < 0.5 ? 'FPB' : 'KPK';
+            
+            // Kadang muncul soal cerita untuk medium/hard
+            let isWordProblem = difficulty !== 'easy' && Math.random() < 0.4;
+            
+            let a, b, answer;
+            do {
+                a = Math.floor(Math.random() * (maxNum - 4)) + 4;
+                b = Math.floor(Math.random() * (maxNum - 4)) + 4;
+            } while (a === b || gcd(a,b) === 1); // Avoid prime pairs or identical numbers for better questions
+
+            if (type === 'FPB') {
+                answer = gcd(a, b);
+            } else {
+                answer = lcm(a, b);
+            }
+
+            let qText = `Berapakah ${type} dari ${a} dan ${b}?`;
+            
+            if (isWordProblem) {
+                if (type === 'KPK') {
+                    qText = `Lampu A berkedip tiap ${a} detik. Lampu B berkedip tiap ${b} detik. Tiap berapa detik kedua lampu berkedip bersamaan? (KPK)`;
+                } else {
+                    qText = `Ibu punya ${a} apel dan ${b} jeruk yang akan dibagikan ke dalam kantong plastik dengan jumlah sama banyak. Berapa kantong plastik terbanyak yang diperlukan? (FPB)`;
+                }
+            }
+
+            // Generate options
+            let options = [answer];
+            while (options.length < 4) {
+                let diff = Math.floor(Math.random() * 10) + 1;
+                let opt = answer + (Math.random() < 0.5 ? diff : -diff);
+                if (opt > 0 && !options.includes(opt)) {
+                    options.push(opt);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            // Generate Explanation
+            let exp = `
+                <p><strong>Langkah penyelesaian:</strong></p>
+                <p>Mencari faktorisasi prima dari ${a} dan ${b}:</p>
+                <ul class="list-disc list-inside mt-1 mb-2">
+                    <li>Faktorisasi ${a} = ${formatFactors(getPrimeFactors(a))}</li>
+                    <li>Faktorisasi ${b} = ${formatFactors(getPrimeFactors(b))}</li>
+                </ul>
+                <p><strong>Ingat Rumus ${type}:</strong><br>
+                ${type === 'FPB' 
+                    ? 'FPB = Ambil faktor yang <strong>SAMA</strong> dengan pangkat <strong>TERKECIL</strong>.' 
+                    : 'KPK = Ambil <strong>SEMUA</strong> faktor, jika ada yang sama ambil pangkat <strong>TERBESAR</strong>.'
+                }</p>
+                <p class="mt-2 text-sm font-bold text-emerald-700">Jadi, ${type} dari ${a} & ${b} adalah ${answer}.</p>
+            `;
+
+            return { question: qText, options: options, answer: answer, explanation: exp, type: type };
+        }
+
+        function triggerQuestion(type, pos, player) {
+            activeQuestion = generateQuestion();
+            
+            const modal = document.getElementById('question-modal');
+            const typeBadge = document.getElementById('question-type-badge');
+            const ctxText = document.getElementById('question-context');
+            const qText = document.getElementById('question-text');
+            const optContainer = document.getElementById('options-container');
+            const feedback = document.getElementById('feedback-message');
+            
+            feedback.classList.add('hidden');
+            optContainer.innerHTML = '';
+
+            if (type === 'ladder') {
+                typeBadge.innerHTML = `<i class="fa-solid fa-stairs"></i> Tantangan Tangga`;
+                typeBadge.className = "px-3.5 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-1.5";
+                ctxText.innerText = "Jawab untuk naik ke atas!";
+                ctxText.className = "text-xs font-bold text-emerald-700 uppercase tracking-wide mb-1";
+            } else {
+                typeBadge.innerHTML = `<i class="fa-solid fa-worm"></i> Tantangan Ular`;
+                typeBadge.className = "px-3.5 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-bold flex items-center gap-1.5";
+                ctxText.innerText = "Jawab untuk menghindar dari ular!";
+                ctxText.className = "text-xs font-bold text-rose-700 uppercase tracking-wide mb-1";
+            }
+
+            qText.innerText = activeQuestion.question;
+
+            activeQuestion.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "p-4 rounded-xl border-2 border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-300 font-bold text-slate-700 text-lg transition shadow-sm";
+                btn.innerText = opt;
+                
+                // If AI, click automatically
+                if (player.isAI) {
+                    btn.disabled = true;
+                } else {
+                    btn.onclick = () => submitAnswer(opt, btn);
+                }
+                
+                optContainer.appendChild(btn);
+            });
+
+            modal.classList.remove('hidden');
+
+            if (player.isAI) {
+                // AI Logic: chance to get it right based on difficulty
+                setTimeout(() => {
+                    const aiAccuracy = difficulty === 'easy' ? 0.9 : (difficulty === 'medium' ? 0.75 : 0.6);
+                    let chosenAns;
+                    if (Math.random() < aiAccuracy) {
+                        chosenAns = activeQuestion.answer;
+                    } else {
+                        // Pick random wrong
+                        const wrongOpts = activeQuestion.options.filter(o => o !== activeQuestion.answer);
+                        chosenAns = wrongOpts[Math.floor(Math.random() * wrongOpts.length)];
+                    }
+                    
+                    const btns = optContainer.querySelectorAll('button');
+                    let targetBtn;
+                    btns.forEach(b => {
+                        if (parseInt(b.innerText) === chosenAns) targetBtn = b;
+                    });
+                    
+                    if (targetBtn) submitAnswer(chosenAns, targetBtn);
+                }, 2000);
+            }
+        }
+
+        function submitAnswer(selectedVal, btnElement) {
+            const isCorrect = parseInt(selectedVal) === activeQuestion.answer;
+            const player = players[currentTurn];
+            const feedback = document.getElementById('feedback-message');
+            const btns = document.querySelectorAll('#options-container button');
+            
+            btns.forEach(b => b.disabled = true); // Disable all
+
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                playSound('correct');
+                btnElement.classList.remove('border-slate-200', 'bg-slate-50', 'hover:border-sky-300');
+                btnElement.classList.add('border-emerald-500', 'bg-emerald-100', 'text-emerald-800');
+                feedback.innerText = "Jawaban Benar! Luar Biasa!";
+                feedback.className = "text-xs font-bold text-emerald-600 px-3 py-1 bg-emerald-50 rounded-lg";
+            } else {
+                playSound('wrong');
+                btnElement.classList.remove('border-slate-200', 'bg-slate-50');
+                btnElement.classList.add('border-rose-500', 'bg-rose-100', 'text-rose-800');
+                feedback.innerText = `Kurang tepat. Jawaban benar: ${activeQuestion.answer}`;
+                feedback.className = "text-xs font-bold text-rose-600 px-3 py-1 bg-rose-50 rounded-lg";
+                
+                // Highlight correct
+                btns.forEach(b => {
+                    if (parseInt(b.innerText) === activeQuestion.answer) {
+                        b.classList.remove('border-slate-200', 'bg-slate-50');
+                        b.classList.add('border-emerald-500', 'border-dashed');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                document.getElementById('question-modal').classList.add('hidden');
+                showExplanation(isCorrect, player);
+            }, 1500);
+        }
+
+        function showExplanation(isCorrect, player) {
+            const modal = document.getElementById('explanation-modal');
+            const icon = document.getElementById('exp-status-icon');
+            const title = document.getElementById('exp-status-title');
+            const sub = document.getElementById('exp-status-sub');
+            const body = document.getElementById('explanation-body');
+
+            if (isCorrect) {
+                icon.innerHTML = `<i class="fa-solid fa-circle-check"></i>`;
+                icon.className = "w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold";
+                title.innerText = "Jawaban Tepat!";
+                title.className = "text-lg font-bold text-emerald-700";
+            } else {
+                icon.innerHTML = `<i class="fa-solid fa-circle-xmark"></i>`;
+                icon.className = "w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center text-xl font-bold";
+                title.innerText = "Jawaban Kurang Tepat";
+                title.className = "text-lg font-bold text-rose-700";
+            }
+
+            body.innerHTML = activeQuestion.explanation;
+            modal.classList.remove('hidden');
+
+            // Store result for continuing after explanation
+            modal.dataset.isCorrect = isCorrect;
+        }
+
+        function closeExplanationModal() {
+            const modal = document.getElementById('explanation-modal');
+            modal.classList.add('hidden');
+            const isCorrect = modal.dataset.isCorrect === 'true';
+            const player = players[currentTurn];
+
+            // Resolve pending movement
+            if (pendingSpecialType === 'ladder') {
+                if (isCorrect) {
+                    playSound('ladder');
+                    document.getElementById('action-prompt').innerText = `Jawaban benar! ${player.name} memanjat TANGGA!`;
+                    movePawnStepByStep(player, player.pos, pendingMoveTarget, () => finishTurn());
+                } else {
+                    document.getElementById('action-prompt').innerText = `Jawaban salah. ${player.name} tetap di tempat.`;
+                    finishTurn();
+                }
+            } else if (pendingSpecialType === 'snake') {
+                if (isCorrect) {
+                    document.getElementById('action-prompt').innerText = `Jawaban benar! ${player.name} berhasil menghindar dari ULAR!`;
+                    finishTurn();
+                } else {
+                    playSound('snake');
+                    document.getElementById('action-prompt').innerText = `Jawaban salah. Oh tidak, turun terbawa ULAR!`;
+                    movePawnStepByStep(player, player.pos, pendingMoveTarget, () => finishTurn());
+                }
+            }
+            
+            pendingMoveTarget = null;
+            pendingSpecialType = null;
+            activeQuestion = null;
+        }
+
+        function showWinModal(player) {
+            document.getElementById('winner-name-text').innerText = `${player.name} Memenangkan Petualangan!`;
+            document.getElementById('win-modal').classList.remove('hidden');
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function resetGamePrompt() {
+            if (confirm("Ingin mengatur ulang permainan dan kembali ke menu awal?")) {
+                // Stop any audio
+                if (audioCtx) {
+                    audioCtx.suspend();
+                }
+                document.getElementById('gameplay-screen').classList.add('hidden');
+                document.getElementById('setup-screen').classList.remove('hidden');
+                players = [];
+                currentTurn = 0;
+            }
+        }
+
+        function openGuideModal() {
+            document.getElementById('guide-modal').classList.remove('hidden');
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guide-modal').classList.add('hidden');
+        }
+
+        let scratchCanvas, ctx;
+        let isDrawing = false;
+        let strokeColor = '#1e293b'; // Default dark slate
+
+        function initScratchpad() {
+            scratchCanvas = document.getElementById('scratch-canvas');
+            ctx = scratchCanvas.getContext('2d');
+            
+            // Set canvas correct resolution mapping
+            const rect = scratchCanvas.parentElement.getBoundingClientRect();
+            scratchCanvas.width = rect.width * 2; // For retina displays
+            scratchCanvas.height = rect.height * 2;
+            scratchCanvas.style.width = `${rect.width}px`;
+            scratchCanvas.style.height = `${rect.height}px`;
+            
+            ctx.scale(2, 2);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 3;
+            
+            const startDraw = (e) => {
+                isDrawing = true;
+                ctx.beginPath();
+                const pos = getPos(e);
+                ctx.moveTo(pos.x, pos.y);
+            };
+            const draw = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault(); // prevent scroll on touch screens
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+            };
+            const stopDraw = () => {
+                isDrawing = false;
+                ctx.closePath();
+            };
+            
+            const getPos = (e) => {
+                const rect = scratchCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            };
+
+            // Mouse events
+            scratchCanvas.addEventListener('mousedown', startDraw);
+            scratchCanvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDraw);
+            
+            // Touch events for mobile
+            scratchCanvas.addEventListener('touchstart', startDraw, {passive: false});
+            scratchCanvas.addEventListener('touchmove', draw, {passive: false});
+            window.addEventListener('touchend', stopDraw);
+        }
+
+        function openScratchpad() {
+            document.getElementById('scratchpad-modal').classList.remove('hidden');
+            if (!scratchCanvas) {
+                // Initialize canvas sizes after modal becomes visible
+                setTimeout(initScratchpad, 50); 
+            }
+        }
+
+        function closeScratchpad() {
+            document.getElementById('scratchpad-modal').classList.add('hidden');
+        }
+
+        function clearScratchpad() {
+            if (ctx && scratchCanvas) {
+                ctx.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+            }
+        }
+
+        function setScratchColor(color) {
+            strokeColor = color;
+        }
+
+        // Initialize setup screen on window load
+        window.onload = function () {
+            setPlayerCount(2);
+            createBoardGrid();
+        };
+    </script>
+</body>
+</html>
